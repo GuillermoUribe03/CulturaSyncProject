@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="30">
+    <Properties>
+        <!-- Definir rutas y patrones de log según el entorno -->
+        <Property name="log-path">logs</Property>
+        <Property name="log-pattern">%d{yyyy-MM-dd HH:mm:ss} [%t] %-5level %logger{36} - %msg%n</Property>
+    </Properties>
+
+    <Appenders>
+        <!-- Log en consola, útil para desarrollo -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${log-pattern}"/>
+        </Console>
+
+        <!-- Log para archivos, rotación diaria y tamaño máximo de 10MB -->
+        <RollingFile name="RollingFile" fileName="${log-path}/app.log"
+                     filePattern="${log-path}/app-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="${log-pattern}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>
+        </RollingFile>
+
+        <!-- Log separado para errores, importante para monitoreo de fallos -->
+        <RollingFile name="ErrorFile" fileName="${log-path}/error.log"
+                     filePattern="${log-path}/error-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="${log-pattern}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>
+        </RollingFile>
+
+        <!-- Log para auditoría, puede ser útil en sistemas de producción -->
+        <RollingFile name="AuditFile" fileName="${log-path}/audit.log"
+                     filePattern="${log-path}/audit-%d{yyyy-MM-dd}.log.gz">
+            <PatternLayout pattern="${log-pattern}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+            </Policies>
+            <DefaultRolloverStrategy max="30"/>
+        </RollingFile>
+
+        <!-- Async loggers to improve performance -->
+        <Async name="AsyncConsole">
+            <AppenderRef ref="Console"/>
+        </Async>
+        <Async name="AsyncFile">
+            <AppenderRef ref="RollingFile"/>
+        </Async>
+    </Appenders>
+
+    <Loggers>
+        <!-- Logger raíz captura todo -->
+        <Root level="info">
+            <AppenderRef ref="AsyncConsole"/>
+            <AppenderRef ref="AsyncFile"/>
+        </Root>
+
+        <!-- Logger específico para manejar errores -->
+        <Logger name="com.culturasync" level="error" additivity="false">
+            <AppenderRef ref="ErrorFile"/>
+        </Logger>
+
+        <!-- Logger para auditoría de eventos, útil en producción -->
+        <Logger name="AuditLogger" level="info" additivity="false">
+            <AppenderRef ref="AuditFile"/>
+        </Logger>
+
+        <!-- Logger específico para debug durante desarrollo -->
+        <Logger name="com.culturasync" level="debug" additivity="false">
+            <AppenderRef ref="RollingFile"/>
+        </Logger>
+    </Loggers>
+</Configuration>
